@@ -5,12 +5,9 @@ import { generarJWT } from '../helpers/jwt.js';
 const user = new User();
 
 export const register = async (req, res) => {
-
     const { email,name, password }  = req.body;
 
-    
     try {
-        validateErrors(req, res);
         const newUser = await user.createUser(name,email,password); 
         if(!newUser){
 
@@ -48,7 +45,6 @@ export const login = async (req, res) => {
 
     
     try{
-        validateErrors(req, res);
         const userDB = await user.loginUser(email,password);
         if(!userDB){
 

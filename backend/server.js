@@ -1,7 +1,7 @@
 import express from 'express'; 
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-import calendarRoutes from './routes/calendar.routes.js';
+import eventsRoutes from './routes/events.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import cors from 'cors';
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.use('/api/auth',authRoutes);
-
+app.use('/api/events',eventsRoutes);
 
 
 const server = app.listen(PORT, () => {
