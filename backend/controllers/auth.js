@@ -1,6 +1,6 @@
-import { validationResult } from 'express-validator';
-import { generarJWT } from '../helpers/jwt.js'; 
 import { User } from '../services/User.js'; 
+import { validateErrors } from '../middlewares/validate-errors.js'
+import { generarJWT } from '../helpers/jwt.js'; 
 
 const user = new User();
 
@@ -8,76 +8,70 @@ export const register = async (req, res) => {
 
     const { email,name, password }  = req.body;
 
-    //TODO: create middleware for validation
-
-    const errors = validationResult(req);
-
-    if(!errors.isEmpty()){
-        return res.status(400).json({
-            ok:false,
-            errors:errors.mapped()
-        });
-    }
-
+    
     try {
+        validateErrors(req, res);
+        const newUser = await user.createUser(name,email,password); 
+        if(!newUser){
 
-        const newUser = await user.createUser(name,email,password);
-        const token = await generarJWT(newUser.id,newUser.name);
+            return res.status(400).json({
+                ok:false,
+                msg:'User already exists'
+            });
 
-        return res.status(201).json({
-            ok: true,
-            msg: 'register',
-            name,
-            email,
-            password,
-            token
-        }); 
+        }else{
+
+            const token = await generarJWT(newUser.id,newUser.name);
+            return res.status(201).json({
+                ok: true,
+                msg: 'register',
+                name,
+                email,
+                token
+            }); 
+        }
+
 
     }catch(err){
+
         console.log(err);
         return res.status(500).json({
             ok:false,
-            msg: 'User already exists'
+            msg: 'Unexpected error'
         });
+
     }
 };
 export const login = async (req, res) => {
 
     const { email, password }  = req.body;
 
-
-    //TODO: create middleware for validation
-
-    const errors = validationResult(req);
-
-    if(!errors.isEmpty()){
-        return res.status(400).json({
-            ok:false,
-            errors:errors.mapped()
-        });
-    }
-
+    
     try{
-        const user = await Usuario.findOne({email});
+        validateErrors(req, res);
+        const userDB = await user.loginUser(email,password);
+        if(!userDB){
 
-        if(!user || !user.matchPassword(password,user.password)){
             return res.status(400).json({
                 ok:false,
-                msg:'Email or password incorrect'
+                msg:'Invalid credentials'
+            });
+
+        }else{
+
+            const token = await generarJWT(userDB.id,userDB.name);
+            return res.status(200).json({
+                ok:true,
+                msg:'login',
+                ui: user._id,
+                email,
+                token
+                
             });
         }
 
-        const token = await generarJWT(user.id,user.name);
-        return res.status(200).json({
-            ok:true,
-            msg:'login',
-            ui: user._id,
-            email,
-            token
-            
-        });
-
     }catch(err){
+
         console.log(err);
         return res.status(500).json({
             ok:false,
@@ -90,23 +84,24 @@ export const login = async (req, res) => {
 
 export const renew = async (req, res) => {
   try{
-    const uid = req.uid;
-    const name = req.name;
+        const uid = req.uid;
+        const name = req.name;
 
-    const token = await generarJWT(uid,name);
+        const token = await generarJWT(uid,name);
+        return res.status(200).json({
+            ok:true,
+            msg:'renew',
+            token
+        }); 
 
-    return res.status(200).json({
-        ok:true,
-        msg:'renew',
-        token
-    }); 
+    }catch(err){
 
-  }catch(err){
-    console.log(err);
-    return res.status(500).json({
-        ok:false,
-        msg:'Error inesperado'
-    }); 
-  }
+        console.log(err);
+        return res.status(500).json({
+            ok:false,
+            msg:'Error inesperado'
+        }); 
+
+    }
 
 };
