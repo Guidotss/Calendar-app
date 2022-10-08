@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
-const userSchema =  new mongoose.Schema({
+export const userSchema =  new mongoose.Schema({
     name: {
         type: String,
         required: true
@@ -23,6 +23,3 @@ userSchema.methods.encryptPassword = (password) => {
 userSchema.methods.matchPassword = (password,hash) => {
     return bcrypt.compareSync(password,hash);
 }
-
-const userModel = mongoose.model('User', userSchema);
-export default userModel;

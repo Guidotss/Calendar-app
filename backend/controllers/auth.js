@@ -1,10 +1,14 @@
 import { validationResult } from 'express-validator';
-import Usuario from '../models/UserModel.js';
-import { generarJWT } from '../helpers/jwt.js'
+import { generarJWT } from '../helpers/jwt.js'; 
+import { User } from '../services/User.js'; 
+
+const user = new User();
 
 export const register = async (req, res) => {
 
     const { email,name, password }  = req.body;
+
+    //TODO: create middleware for validation
 
     const errors = validationResult(req);
 
@@ -16,42 +20,33 @@ export const register = async (req, res) => {
     }
 
     try {
-        const user = await Usuario.findOne({email});
 
-        const newUser = new Usuario({name,email});
-        newUser.password = newUser.encryptPassword(password);
+        const newUser = await user.createUser(name,email,password);
+        const token = await generarJWT(newUser.id,newUser.name);
 
-        if(user){
-            return res.status(400).json({
-                ok:false,
-                msg:'User already exists'
-            }); 
-        }else{
-            await newUser.save();
-            const token = await generarJWT(newUser.id,newUser.name);
-            return res.status(201).json({
-                ok: true,
-                msg: 'register',
-                name,
-                email,
-                password,
-                token
-            }); 
-        }
-
-        
+        return res.status(201).json({
+            ok: true,
+            msg: 'register',
+            name,
+            email,
+            password,
+            token
+        }); 
 
     }catch(err){
         console.log(err);
         return res.status(500).json({
             ok:false,
-            msg:'Error inesperado'
+            msg: 'User already exists'
         });
     }
 };
 export const login = async (req, res) => {
 
     const { email, password }  = req.body;
+
+
+    //TODO: create middleware for validation
 
     const errors = validationResult(req);
 
